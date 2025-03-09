@@ -28,6 +28,63 @@ app.get('/hosts',async(req,res)=>{
   }
 });
 
+app.get('/allmesses', async(req,res)=>{
+  try{
+      const messes = await mess.find();
+      console.log("Fetched Mess Data: ", messes.length, "records");
+      res.json(messes);
+  }
+  catch(error){
+      console.error("Error fetching mess data",error);
+      res.status(400).json({error:"Error in fetching mess data"});
+  }
+})
+
+app.get('/top_messes', async(req,res)=>{
+  try{
+      const messes = await mess.find().lean();
+      const sortedMesses = messes.sort((a, b) => (b.review - a.review)).slice(0, 4);
+      res.json(sortedMesses);
+  }
+  catch(error){
+      res.status(400).json({error:"Error in fetching mess data"});
+  }
+})
+
+app.get('/indmess/:id',async(req,res)=>{
+  try{
+      const messData = await mess.findById(req.params.id);
+      if(!messData){
+          return res.status(404).json({error : "Mess not found"});
+      }
+      res.json(messData);
+  }
+  catch(err){
+      res.json({error:err.message});
+  }
+});
+
+app.post('/indmess/:id/rate', async (req, res) => {
+  try {
+      const { rating } = req.body; // Get rating from request
+      const messData = await mess.findById(req.params.id);
+
+      if (!messData) {
+          return res.status(404).json({ error: "Mess not found" });
+      }
+
+      // Update the review_sum and review_total
+      messData.review_sum += rating;
+      messData.review_total += 1;
+      await messData.save(); // Save updated document
+
+      res.json({ message: "Rating updated successfully", updatedMess: messData });
+  } catch (error) {
+      console.error("Error updating rating:", error);
+      res.status(500).json({ error: "Error updating rating" });
+  }
+});
+
 app.post('/add-mess', async (req, res) => {
   try {
     const { hostId, weeklyMenu } = req.body;
