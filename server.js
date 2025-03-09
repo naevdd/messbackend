@@ -30,7 +30,7 @@ app.get('/hosts',async(req,res)=>{
 
 app.get('/allmesses', async(req,res)=>{
   try{
-      const messes = await mess.find();
+      const messes = await Host.find();
       console.log("Fetched Mess Data: ", messes.length, "records");
       res.json(messes);
   }
@@ -42,7 +42,7 @@ app.get('/allmesses', async(req,res)=>{
 
 app.get('/top_messes', async(req,res)=>{
   try{
-      const messes = await mess.find().lean();
+      const messes = await Host.find().lean();
       const sortedMesses = messes.sort((a, b) => (b.review - a.review)).slice(0, 4);
       res.json(sortedMesses);
   }
@@ -53,7 +53,7 @@ app.get('/top_messes', async(req,res)=>{
 
 app.get('/indmess/:id',async(req,res)=>{
   try{
-      const messData = await mess.findById(req.params.id);
+      const messData = await Host.findById(req.params.id);
       if(!messData){
           return res.status(404).json({error : "Mess not found"});
       }
@@ -67,7 +67,7 @@ app.get('/indmess/:id',async(req,res)=>{
 app.post('/indmess/:id/rate', async (req, res) => {
   try {
       const { rating } = req.body; // Get rating from request
-      const messData = await mess.findById(req.params.id);
+      const messData = await Host.findById(req.params.id);
 
       if (!messData) {
           return res.status(404).json({ error: "Mess not found" });
