@@ -1,42 +1,23 @@
 const mongoose = require('mongoose');
 
 const mealSchema = new mongoose.Schema({
-  type: { 
-    type: String, 
-    enum: ['Breakfast', 'Lunch', 'Dinner'], 
-    required: true 
-  },
-  items: [{ 
-    type: String, 
-    required: true 
-  }], 
+  type: String,
+  items: [String]
 });
 
-const dailyMenuSchema = new mongoose.Schema({
-  day: { 
-    type: String, 
-    enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], 
-    required: true 
-  },
-  meals: [mealSchema],
+const weeklyMenuSchema = new mongoose.Schema({
+  day: String,
+  meals: [mealSchema]
 });
 
 const messSchema = new mongoose.Schema({
-  messName: { 
-    type: String, 
-    required: true 
-  },
-  location: { 
-    type: String 
-  }, 
-  weeklyMenu: [dailyMenuSchema], 
-  host: {
+  messName: String,
+  location: String,
+  hostId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'hosts', // Reference to the hosts collection
-    required: true
-  }
+    ref: "hosts"
+  },
+  weeklyMenu: [weeklyMenuSchema]
 });
 
-const Mess = mongoose.model('mess', messSchema);
-
-module.exports = Mess;
+module.exports = mongoose.model("messes", messSchema, "messes");

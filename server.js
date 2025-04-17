@@ -3,6 +3,7 @@ const cors = require('cors');
 const Mess = require('./models/Menu')
 const Host =require('./models/Host')
 const app = express();
+const mongoose=require('mongoose');
 const PORT = 5000;
 const dotenv = require('dotenv')
 const connectDB = require("./db");
@@ -18,6 +19,48 @@ app.use('/student',studRoutes);
 
 app.use(express.json());
 
+/*const hostSchema = new mongoose.Schema({
+    ownername: String,
+    password: String,
+    messname: String,
+    location: String,
+    email: String,
+    phone: String,
+    price: String,
+    time: String,
+    review_sum: {type:Number, default:0},
+    review_total: {type:Number, default:0},
+},
+{toJSON: {virtuals:true}, toObject:{virtuals:true}}
+);
+
+hostSchema.virtual('review').get(function(){
+  return this.review_total>0 ? (this.review_sum/this.review_total).toFixed(2):0;
+});
+
+const mealSchema = new mongoose.Schema({
+  type: String,           // "Breakfast", "Lunch", "Dinner"
+  items: [String]         // List of food items
+});
+
+const weeklyMenuSchema = new mongoose.Schema({
+  day: String,            // e.g., "Monday"
+  meals: [mealSchema]     // Array of meals for the day
+});
+
+const messSchema = new mongoose.Schema({
+  messName: String,       // e.g., "Campus Messy"
+  location: String,       // e.g., "Block A"
+  hostId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "hosts"          // Reference to the hosts collection
+  },
+  weeklyMenu: [weeklyMenuSchema] // Full week's menu
+});
+
+const host = mongoose.model("hosts", hostSchema,"hostData");
+const messes=mongoose.model("messes",messSchema,"messData")*/
+
 app.get('/hosts',async(req,res)=>{
   try{
     const Hosts=await Host.find();
@@ -30,7 +73,7 @@ app.get('/hosts',async(req,res)=>{
 
 app.get('/allmesses', async(req,res)=>{
   try{
-      const messes = await Host.find();
+      const messes = await Host.find().lean({ virtuals: true });
       console.log("Fetched Mess Data: ", messes.length, "records");
       res.json(messes);
   }
@@ -42,7 +85,7 @@ app.get('/allmesses', async(req,res)=>{
 
 app.get('/top_messes', async(req,res)=>{
   try{
-      const messes = await Host.find().lean();
+      const messes = await Host.find().lean({virtuals:true});
       const sortedMesses = messes.sort((a, b) => (b.review - a.review)).slice(0, 4);
       res.json(sortedMesses);
   }
@@ -51,16 +94,43 @@ app.get('/top_messes', async(req,res)=>{
   }
 })
 
+const getDay=()=>{
+  const days=["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  return days[new Date().getDay()];
+}
+
 app.get('/indmess/:id',async(req,res)=>{
   try{
-      const messData = await Host.findById(req.params.id);
-      if(!messData){
-          return res.status(404).json({error : "Mess not found"});
-      }
-      res.json(messData);
+    const {id} = req.params;
+    const mess = await Mess.findById(id).lean();
+
+    if(!mess){
+      return res.status(404).json({message:"Mess not found"});
+    }
+
+    const hostdata = await Host.findById(mess.ObjectId).lean();
+
+    if(!hostdata){
+      return res.status(404).json({message:"Host not found"});
+    }
+
+    const today=getDay();
+    const todayMenu = mess.weeklyMenu.find((menu) => menu.day == today);
+
+    const data={
+      messName:mess.messName,
+      location:mess.location,
+      image:mess.image||null,
+      food:todayMenu?todayMenu.meals:[],
+      time:hostdata.time,
+      locations:hostdata.location,
+      phone:hostdata.phone
+    }
+
+    res.json(data);
   }
-  catch(err){
-      res.json({error:err.message});
+  catch(error){
+    console.log(error);
   }
 });
 
@@ -89,14 +159,14 @@ app.post('/add-mess', async (req, res) => {
   try {
     const { hostId, weeklyMenu } = req.body;
 
-    const host = await Host.findById(hostId);
-    if (!host) return res.status(404).json({ error: 'Host not found' });
+    const hostdata = await Host.findById(hostId);
+    if (!hostdata) return res.status(404).json({ error: 'Host not found' });
 
     const newMess = new Mess({
-      messName: host.messname,
-      location: host.location,
+      messName: hostdata.messname,
+      location: hostdata.location,
       weeklyMenu,
-      hostId: host._id
+      hostId: hostdata._id
     });
 
     await newMess.save();
@@ -130,8 +200,8 @@ app.put('/update-menu', async (req, res) => {
     
     // If no mess exists, try to create one using the host's messName from the Host document
     if (!mess) {
-      const host = await Host.findById(hostId);
-      if (!host) {
+      const hostdata = await Host.findById(hostId);
+      if (!hostdata) {
         return res.status(404).json({ message: 'Host not found' });
       }
       mess = await Mess.create({
@@ -160,7 +230,7 @@ app.put('/update-menu', async (req, res) => {
     res.status(500).json({ message: 'Failed to update menu details' });
   }
 });
-
+/*
 app.get('/get-menu/:hostId', async (req, res) => {
   try {
     const { hostId } = req.params;
@@ -174,15 +244,15 @@ app.get('/get-menu/:hostId', async (req, res) => {
     res.status(500).json({ error: 'An error occurred while retrieving menu details.' });
   }
 });
-
-
+duplicate function
+*/
 app.put('/hosts', async (req, res) => {
   const { id, ownerName, messName, location, mailId, mobileNumber, workingDays } = req.body;
 
   try {
     // Find the host by ID and update the details
     console.log("Request body:", req.body); 
-    const updatedHost = await hosts.findByIdAndUpdate(
+    const updatedHost = await Host.findByIdAndUpdate(
       id,
       {
         ownername: ownerName,
@@ -190,7 +260,7 @@ app.put('/hosts', async (req, res) => {
         location: location,
         email: mailId,
         phone: mobileNumber,
-        workinghours: workingDays,
+        time: workingDays,
       },
       { new: true }
     );
