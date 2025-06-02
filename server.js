@@ -64,10 +64,11 @@ const messes=mongoose.model("messes",messSchema,"messData")*/
 app.get('/hosts',async(req,res)=>{
   try{
     const Hosts=await Host.find();
+    console.log(Hosts)
     res.json(Hosts);
   }catch(error){
     console.error(error);
-    res.status(500).json({message:'Failed to fetch donors'})
+    res.status(500).json({message:'Failed to fetch hosts'})
   }
 });
 
@@ -99,38 +100,44 @@ const getDay=()=>{
   return days[new Date().getDay()];
 }
 
-app.get('/indmess/:id',async(req,res)=>{
-  try{
-    const {id} = req.params;
-    const mess = await Mess.findById(id).lean();
+app.get('/indmess/:id', async (req, res) => {
 
-    if(!mess){
-      return res.status(404).json({message:"Mess not found"});
+  const { id } = req.params;
+  console.log('Fetching mess with id:', id);
+
+  try {
+    console.log("hello")
+    const mess = await Host.findById(id).lean();
+    console.log(mess)
+
+    if (!mess) {
+      console.log("brah")
+      return res.status(400).json({ message: "Mess not found" });
     }
 
-    const hostdata = await Host.findById(mess.ObjectId).lean();
+    console.log("okk")
 
-    if(!hostdata){
-      return res.status(404).json({message:"Host not found"});
-    }
+    const today = 'Tuesday';
+    
+    const todayMenu = mess.weeklyMenu.find(menu => menu.day === today);
 
-    const today=getDay();
-    const todayMenu = mess.weeklyMenu.find((menu) => menu.day == today);
+    const data = {
+      messName: mess.messName,
+      location: mess.location,
+      image: mess.image || null,
+      breakfast: todayMenu ? todayMenu.meals[0].items : [],
+      lunch: todayMenu ? todayMenu.meals[1].items : [],
+      dinner: todayMenu ? todayMenu.meals[2].items : [],
+      time: mess.time || null,
+      phone: mess.phone || null,
+    };
 
-    const data={
-      messName:mess.messName,
-      location:mess.location,
-      image:mess.image||null,
-      food:todayMenu?todayMenu.meals:[],
-      time:hostdata.time,
-      locations:hostdata.location,
-      phone:hostdata.phone
-    }
+    console.log(data.lunch)
 
     res.json(data);
-  }
-  catch(error){
-    console.log(error);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
@@ -155,25 +162,28 @@ app.post('/indmess/:id/rate', async (req, res) => {
   }
 });
 
-app.post('/add-mess', async (req, res) => {
+app.put('/add-mess', async (req, res) => {
+  const { id, weeklyMenu } = req.body; // weeklyMenu is expected to be an array with one object (the day to update)
+  console.log("Update request received:", req.body);
   try {
-    const { hostId, weeklyMenu } = req.body;
+    // Find the host by ID and update the details
+    console.log("Request body:", req.body); 
+    const updatedHost = await Host.findByIdAndUpdate(
+      id,
+      {
+        weeklyMenu: weeklyMenu,
+      },
+      { new: true }
+    );
 
-    const hostdata = await Host.findById(hostId);
-    if (!hostdata) return res.status(404).json({ error: 'Host not found' });
+    if (!updatedHost) {
+      return res.status(404).json({ message: "Host not found" });
+    }
 
-    const newMess = new Mess({
-      messName: hostdata.messname,
-      location: hostdata.location,
-      weeklyMenu,
-      hostId: hostdata._id
-    });
-
-    await newMess.save();
-    res.status(201).json({ message: 'Mess details added successfully!', data: newMess });
+    res.json(updatedHost);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'An error occurred while adding mess details.' });
+    console.error("Error while updating host:", error);
+    res.status(500).json({ message: "Failed to update host details" });
   }
 });
 
@@ -181,7 +191,8 @@ app.get('/get-menu/:hostId', async (req, res) => {
   const { hostId } = req.params;
 
   try {
-    const mess = await Mess.findOne({ host: hostId });
+    const mess = await Host.findById(hostId)
+    console.log(mess, hostId)
     if (!mess) return res.status(404).json({ message: "Mess not found" });
 
     res.json(mess);
@@ -196,21 +207,7 @@ app.put('/update-menu', async (req, res) => {
   console.log("Update request received:", req.body);
   try {
     // Find the Mess document for this host
-    let mess = await Mess.findOne({ host: hostId });
-    
-    // If no mess exists, try to create one using the host's messName from the Host document
-    if (!mess) {
-      const hostdata = await Host.findById(hostId);
-      if (!hostdata) {
-        return res.status(404).json({ message: 'Host not found' });
-      }
-      mess = await Mess.create({
-        host: hostId,
-        messName: host.messname, // required field from Host
-        weeklyMenu: weeklyMenu  // Create with the provided day's data
-      });
-      return res.json({ message: 'Mess created and menu updated successfully!', data: mess });
-    }
+    let mess = await Host.findById(hostId);
     
     // Extract the updated day object from the array
     const updatedDay = weeklyMenu[0];
@@ -230,22 +227,7 @@ app.put('/update-menu', async (req, res) => {
     res.status(500).json({ message: 'Failed to update menu details' });
   }
 });
-/*
-app.get('/get-menu/:hostId', async (req, res) => {
-  try {
-    const { hostId } = req.params;
-    const mess = await Mess.findOne({ hostId });
 
-    if (!mess) return res.status(404).json({ error: 'Menu not found' });
-
-    res.status(200).json({ message: 'Menu retrieved successfully!', data: mess });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'An error occurred while retrieving menu details.' });
-  }
-});
-duplicate function
-*/
 app.put('/hosts', async (req, res) => {
   const { id, ownerName, messName, location, mailId, mobileNumber, workingDays } = req.body;
 
@@ -278,4 +260,30 @@ app.put('/hosts', async (req, res) => {
 
 app.listen(PORT,()=>{
     console.log(`server listening on port ${PORT}`)
+});
+
+app.put('/update-menu', async (req, res) => {
+  const { hostId, weeklyMenu } = req.body; // weeklyMenu is expected to be an array with one object (the day to update)
+  console.log("Update request received:", req.body);
+  try {
+    // Find the Mess document for this host
+    let mess = await Host.findOne({ host: hostId });
+    
+    // Extract the updated day object from the array
+    const updatedDay = weeklyMenu[0];
+    
+    // Remove any existing entry for that day
+    const filteredMenu = mess.weeklyMenu.filter(item => item.day !== updatedDay.day);
+    // Add the updated day
+    filteredMenu.push(updatedDay);
+    
+    // Update the document
+    mess.weeklyMenu = filteredMenu;
+    await mess.save();
+    
+    res.json({ message: 'Menu updated successfully!', data: mess });
+  } catch (error) {
+    console.error('Error while updating menu:', error);
+    res.status(500).json({ message: 'Failed to update menu details' });
+  }
 });
