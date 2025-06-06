@@ -19,6 +19,7 @@ const hostSchema = new mongoose.Schema({
   phone: String,
   price: String,
   time: String,
+  image: String,
   weeklyMenu: [weeklyMenuSchema],
   review_sum: { type: Number, default: 0 },
   review_total: { type: Number, default: 0 },

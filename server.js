@@ -4,7 +4,8 @@ const Mess = require('./models/Menu')
 const Host =require('./models/Host')
 const app = express();
 const mongoose=require('mongoose');
-const PORT = 5000;
+const PORT = 3000;
+const path = require('path')
 const dotenv = require('dotenv')
 const connectDB = require("./db");
 const hostRoutes = require('./routes/hosts');
@@ -13,11 +14,12 @@ const studRoutes = require('./routes/students');
 dotenv.config();
 connectDB();
 app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/host', hostRoutes);
 app.use('/student',studRoutes);
-
-app.use(express.json());
 
 /*const hostSchema = new mongoose.Schema({
     ownername: String,
