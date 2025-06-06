@@ -258,6 +258,35 @@ app.put('/hosts', async (req, res) => {
   }
 });
 
+app.put('/student', async (req, res) => {
+  const { id, studentName, hostelName, address, emailId, phone } = req.body;
+
+  try {
+    // Find the host by ID and update the details
+    console.log("Request body:", req.body); 
+    const updatedHost = await Host.findByIdAndUpdate(
+      id,
+      {
+        studentName: studentName,
+        hostelName: hostelName,
+        address: address,
+        emailId: emailId,
+        mobileNumber:phone,
+      },
+      { new: true }
+    );
+
+    if (!updatedStudent) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    res.json(updatedStudent);
+  } catch (error) {
+    console.error("Error while updating student:", error);
+    res.status(500).json({ message: "Failed to update student details" });
+  }
+});
+
 app.listen(PORT,()=>{
     console.log(`server listening on port ${PORT}`)
 });
