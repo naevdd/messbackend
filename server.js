@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const Mess = require('./models/Menu')
 const Host =require('./models/Host')
+const Student =require('./models/Stud')
 const app = express();
 const mongoose=require('mongoose');
 const PORT = 5000;
@@ -259,19 +260,19 @@ app.put('/hosts', async (req, res) => {
 });
 
 app.put('/student', async (req, res) => {
-  const { id, studentName, hostelName, address, emailId, phone } = req.body;
+  const { id, studentName, hostelName, address, emailID, phone } = req.body;
 
   try {
     // Find the host by ID and update the details
     console.log("Request body:", req.body); 
-    const updatedHost = await Host.findByIdAndUpdate(
+    const updatedStudent = await Student.findByIdAndUpdate(
       id,
       {
         studentName: studentName,
         hostelName: hostelName,
         address: address,
-        emailId: emailId,
-        mobileNumber:phone,
+        emailID: emailID,
+        phone:phone,
       },
       { new: true }
     );
