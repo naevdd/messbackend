@@ -4,11 +4,15 @@ const jwt = require('jsonwebtoken');
 const router = express.Router();
 const Host = require('../models/Host');
 const Mess = require('../models/Menu');
+const upload = require('../upload')
 require('dotenv').config();
 
-router.post('/register', async (req, res) => {
+router.post('/register',upload.single('image'), async (req, res) => {
   try {
     const { ownername, messname, location, email, phone, workinghours, password } = req.body;
+
+    const image = req.file ? req.file.filename : null;
+
     if (!ownername || !messname || !location || !email || !phone || !workinghours || !password) {
       return res.status(400).json({ error: 'All fields are required' });
     }
@@ -26,7 +30,8 @@ router.post('/register', async (req, res) => {
       email,
       phone,
       workinghours,
-      password: hashedPassword
+      password: hashedPassword,
+      image
     });
 
     const savedHost = await newHost.save();
