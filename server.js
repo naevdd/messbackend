@@ -244,7 +244,7 @@ app.put('/hosts', async (req, res) => {
         location: location,
         email: mailId,
         phone: mobileNumber,
-        time: workingDays,
+        workinghours: workingDays,
       },
       { new: true }
     );

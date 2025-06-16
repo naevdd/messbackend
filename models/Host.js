@@ -18,7 +18,7 @@ const hostSchema = new mongoose.Schema({
   email: String,
   phone: String,
   price: String,
-  time: String,
+  workinghours: String,
   image: String,
   weeklyMenu: [weeklyMenuSchema],
   review_sum: { type: Number, default: 0 },
