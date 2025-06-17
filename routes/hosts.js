@@ -2,8 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
-const Host = require('../models/Host');
-const Mess = require('../models/Menu');
+const Host = require('../models/Host');;
 const upload = require('../upload')
 require('dotenv').config();
 
@@ -22,21 +21,6 @@ router.post('/register',upload.single('image'), async (req, res) => {
       return res.status(400).json({ error: 'Email already exists' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newHost = new Host({
-      ownername,
-      messname,
-      location,
-      email,
-      phone,
-      workinghours,
-      password: hashedPassword,
-      image
-    });
-
-    const savedHost = await newHost.save();
-
-    // Create an empty weekly menu for this host
     const emptyMenu = [
       'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
     ].map(day => ({
@@ -48,16 +32,22 @@ router.post('/register',upload.single('image'), async (req, res) => {
       ]
     }));
 
-    const newMess = new Mess({
-      messName: messname,
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newHost = new Host({
+      ownername,
+      messname,
       location,
-      weeklyMenu: emptyMenu,
-      host: savedHost._id // Link the menu to the host
+      email,
+      phone,
+      workinghours,
+      password: hashedPassword,
+      image,
+      weeklyMenu: emptyMenu
     });
 
-    await newMess.save();
+    const savedHost = await newHost.save();
 
-    res.status(201).json({ message: 'Host registered and menu created successfully!', host: savedHost, mess: newMess });
+    res.status(201).json({ message: 'Host registered successfully!', host: savedHost });
   } catch (error) {
     res.status(500).json({ error: `Failed to save host: ${error.message}` });
   }
@@ -73,12 +63,14 @@ router.post('/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ error: 'Invalid credentials' });
 
+    const hostId = user._id
+
     const token = jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
-    res.json({ token });
+    res.json({ token, hostId });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }

@@ -1,6 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const Mess = require('./models/Menu')
 const Host =require('./models/Host')
 const Student =require('./models/Stud')
 const app = express();
@@ -194,7 +193,7 @@ app.get('/get-menu/:hostId', async (req, res) => {
   const { hostId } = req.params;
 
   try {
-    const mess = await Host.findById(hostId)
+    const mess = await Host.findById(hostId).lean();
     console.log(mess, hostId)
     if (!mess) return res.status(404).json({ message: "Mess not found" });
 
