@@ -119,12 +119,12 @@ app.get('/indmess/:id', async (req, res) => {
 
     console.log("okk")
 
-    const today = 'Tuesday';
+    const today = getDay();
     
     const todayMenu = mess.weeklyMenu.find(menu => menu.day === today);
 
     const data = {
-      messName: mess.messName,
+      messname: mess.messname,
       location: mess.location,
       image: mess.image || null,
       breakfast: todayMenu ? todayMenu.meals[0].items : [],
@@ -134,7 +134,7 @@ app.get('/indmess/:id', async (req, res) => {
       phone: mess.phone || null,
     };
 
-    console.log(data.lunch)
+    console.log("yo",data.lunch)
 
     res.json(data);
   } catch (error) {
