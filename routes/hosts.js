@@ -65,12 +65,12 @@ router.post('/login', async (req, res) => {
 
     const hostId = user._id
 
-    const token = jwt.sign(
+    const messtoken = jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
-    res.json({ token, hostId });
+    res.json({ messtoken, hostId });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -82,10 +82,10 @@ router.get('/protected', (req, res) => {
     return res.status(401).json({ error: 'Token missing or malformed' });
   }
 
-  const token = authHeader.split(' ')[1];
+  const messtoken = authHeader.split(' ')[1];
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(messtoken, process.env.JWT_SECRET);
     res.json({ message: 'Access granted', user: decoded });
   } catch (err) {
     res.status(403).json({ error: 'Invalid or expired token' });
