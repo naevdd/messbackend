@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const Host =require('./models/Host')
 const Student =require('./models/Stud')
+const Order = require('./models/Order');
 const app = express();
 const mongoose=require('mongoose');
 const PORT = 3000;
@@ -142,6 +143,7 @@ app.get('/indmess/:id', async (req, res) => {
       dinner: todayMenu ? todayMenu.meals[2].items : [],
       time: mess.time || null,
       phone: mess.phone || null,
+      weeklyMenu: mess.weeklyMenu || [],
     };
 
     console.log("yo",data.lunch)
@@ -328,3 +330,27 @@ app.put('/update-menu', async (req, res) => {
     res.status(500).json({ message: 'Failed to update menu details' });
   }
 });
+
+app.post('/order' ,async (req,res) => {
+
+  try {
+    // Find the order by ID and update the details
+    const { orderId, messName, customerName, customerPhone, status,orderDate } = req.body;
+    console.log("Order details received:", req.body);
+
+    const newOrder = new Order({
+      orderId,
+      messName,
+      customerName,
+      customerPhone,
+      orderDate: new Date(),
+      status
+    });
+    await newOrder.save();
+
+    res.json(newOrder);
+  } catch (error) {
+    console.error("Error while updating order:", error);
+    res.status(500).json({ message: "Failed to update order details" });
+  }
+})
