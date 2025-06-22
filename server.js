@@ -75,6 +75,16 @@ app.get('/hosts',async(req,res)=>{
   }
 });
 
+app.get('/students', async (req, res) => {
+  try {
+    const students = await Student.find();
+    res.json(students);
+  } catch (error) {
+    console.error("Error fetching students:", error);
+    res.status(500).json({ message: 'Failed to fetch students' });
+  }
+});
+
 app.get('/allmesses', async(req,res)=>{
   try{
       const messes = await Host.find().lean({ virtuals: true });
@@ -262,8 +272,8 @@ app.put('/hosts', async (req, res) => {
   }
 });
 
-app.put('/student', async (req, res) => {
-  const { id, studentName, hostelName, address, emailID, phone } = req.body;
+app.put('/students', async (req, res) => {
+  const { id, studentname, hostelname, address, email, phone } = req.body;
 
   try {
     // Find the host by ID and update the details
@@ -271,10 +281,10 @@ app.put('/student', async (req, res) => {
     const updatedStudent = await Student.findByIdAndUpdate(
       id,
       {
-        studentName: studentName,
-        hostelName: hostelName,
+        studentname: studentname,
+        hostelname: hostelname,
         address: address,
-        emailID: emailID,
+        email: email,
         phone:phone,
       },
       { new: true }
