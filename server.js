@@ -14,7 +14,7 @@ const studRoutes = require('./routes/students');
 
 dotenv.config();
 connectDB();
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+app.use(cors({ origin: 'https://messconnect-eta.vercel.app/', credentials: true }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
@@ -84,6 +84,18 @@ app.get('/students', async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch students' });
   }
 });
+
+app.get('/orders', async(req,res)=>{
+  try{
+      const orders = await Order.find().lean({ virtuals: true });
+      console.log("Fetched Mess Data: ", orders.length, "records");
+      res.json(orders);
+  }
+  catch(error){
+      console.error("Error fetching mess data",error);
+      res.status(400).json({error:"Error in fetching mess data"});
+  }
+})
 
 app.get('/allmesses', async(req,res)=>{
   try{
