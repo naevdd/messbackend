@@ -14,7 +14,7 @@ const studRoutes = require('./routes/students');
 
 dotenv.config();
 connectDB();
-app.use(cors({ origin: 'https://messconnect-eta.vercel.app', credentials: true }));
+app.use(cors({ origin: 'https://messconnect.onrender.com', credentials: true }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
