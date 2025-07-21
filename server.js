@@ -100,8 +100,14 @@ app.get('/allmesses', async(req,res)=>{
 app.get('/top_messes', async(req,res)=>{
   try{
       const messes = await Host.find().lean({virtuals:true});
-      const sortedMesses = messes.sort((a, b) => (b.review - a.review)).slice(0, 4);
-      res.json(sortedMesses);
+      const sortedMesses = messes.sort((a, b) => (b.review - a.review));
+
+      const topMesses = [];
+      for (let i=0;i<5 && i<sortedMesses.length;i++){
+        const mess = sortedMesses[i];
+        topMesses.push(mess);
+      }
+      res.json(topMesses);
   }
   catch(error){
       res.status(400).json({error:"Error in fetching mess data"});
