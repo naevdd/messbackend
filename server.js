@@ -14,7 +14,7 @@ const studRoutes = require('./routes/students');
 
 dotenv.config();
 connectDB();
-app.use(cors({ origin: 'https://messconnect.onrender.com', credentials: true }));
+app.use(cors({ origin: 'https://messconnect.onrender.com/', credentials: true }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
@@ -78,6 +78,7 @@ app.get('/hosts',async(req,res)=>{
 app.get('/students', async (req, res) => {
   try {
     const students = await Student.find();
+    console.log('student', students)
     res.json(students);
   } catch (error) {
     console.error("Error fetching students:", error);
@@ -153,12 +154,12 @@ app.get('/indmess/:id', async (req, res) => {
       breakfast: todayMenu ? todayMenu.meals[0].items : [],
       lunch: todayMenu ? todayMenu.meals[1].items : [],
       dinner: todayMenu ? todayMenu.meals[2].items : [],
-      time: mess.time || null,
+      time: mess.workinghours || null,
       phone: mess.phone || null,
       weeklyMenu: mess.weeklyMenu || [],
     };
 
-    console.log("yo",data.lunch)
+    console.log("yo",data)
 
     res.json(data);
   } catch (error) {
@@ -347,7 +348,7 @@ app.post('/order' ,async (req,res) => {
 
   try {
     // Find the order by ID and update the details
-    const { orderId, messName, customerName, customerPhone, status,orderDate } = req.body;
+    const { orderId, messName, customerName, customerPhone, status, orderDate } = req.body;
     console.log("Order details received:", req.body);
 
     const newOrder = new Order({
