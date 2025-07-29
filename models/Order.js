@@ -7,7 +7,7 @@ const dayMealSchema = new mongoose.Schema({
 
 const orderSchema = new mongoose.Schema({
     orderId: { type: String, required: true, unique: true },
-    messName: { type: String, required: true },
+    messEmail: { type: String, required: true },
     customerName: { type: String, required: true },
     customerPhone: { type: Number, required: true },
     orderDate: { type: Date, default: Date.now },
