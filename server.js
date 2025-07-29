@@ -5,7 +5,7 @@ const Student =require('./models/Stud')
 const Order = require('./models/Order');
 const app = express();
 const mongoose=require('mongoose');
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const path = require('path')
 const dotenv = require('dotenv')
 const connectDB = require("./db");
@@ -14,7 +14,7 @@ const studRoutes = require('./routes/students');
 
 dotenv.config();
 connectDB();
-app.use(cors({ origin: 'https://messconnect.onrender.com', credentials: true }));
+app.use(cors({ origin: process.env.CORS_ORIGIN, credentials: true }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
@@ -78,12 +78,25 @@ app.get('/hosts',async(req,res)=>{
 app.get('/students', async (req, res) => {
   try {
     const students = await Student.find();
+    console.log('student', students)
     res.json(students);
   } catch (error) {
     console.error("Error fetching students:", error);
     res.status(500).json({ message: 'Failed to fetch students' });
   }
 });
+
+app.get('/orders', async(req,res)=>{
+  try{
+      const orders = await Order.find().lean({ virtuals: true });
+      console.log("Fetched Mess Data: ", orders.length, "records");
+      res.json(orders);
+  }
+  catch(error){
+      console.error("Error fetching mess data",error);
+      res.status(400).json({error:"Error in fetching mess data"});
+  }
+})
 
 app.get('/allmesses', async(req,res)=>{
   try{
@@ -149,12 +162,12 @@ app.get('/indmess/:id', async (req, res) => {
       breakfast: todayMenu ? todayMenu.meals[0].items : [],
       lunch: todayMenu ? todayMenu.meals[1].items : [],
       dinner: todayMenu ? todayMenu.meals[2].items : [],
-      time: mess.time || null,
+      time: mess.workinghours || null,
       phone: mess.phone || null,
       weeklyMenu: mess.weeklyMenu || [],
     };
 
-    console.log("yo",data.lunch)
+    console.log("yo",data)
 
     res.json(data);
   } catch (error) {
@@ -316,8 +329,8 @@ app.put('/students', async (req, res) => {
   }
 });
 
-app.listen(PORT,()=>{
-    console.log(`server listening on port ${PORT}`)
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
 });
 
 app.put('/update-menu', async (req, res) => {
