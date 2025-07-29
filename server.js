@@ -336,12 +336,11 @@ app.listen(PORT, '0.0.0.0', () => {
 app.post('/order' ,async (req,res) => {
 
   try {
-    // Find the order by ID and update the details
-    const { id, messemail, customerName,customerEmail, customerPhone, status,} = req.body;
+    const { orderId, messemail, customerName, customerEmail, customerPhone, status } = req.body;
     console.log("Order details received:", req.body);
 
     const newOrder = new Order({
-      id,
+      orderId, 
       messemail,
       customerName,
       customerEmail,
