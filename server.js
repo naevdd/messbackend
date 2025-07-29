@@ -86,17 +86,27 @@ app.get('/students', async (req, res) => {
   }
 });
 
-app.get('/orders', async(req,res)=>{
-  try{
-      const orders = await Order.find().lean({ virtuals: true });
-      console.log("Fetched Mess Data: ", orders.length, "records");
-      res.json(orders);
+app.get('/orders', async (req, res) => {
+  try {
+    const { messemail } = req.query;
+
+    const filter = {};
+    if (messemail) {
+      filter.messemail = messemail;
+    } else {
+      return res.status(400).json({ error: "Messemail query parameter is required" });
+    }
+
+    const orders = await Order.find(filter).lean({ virtuals: true });
+    
+    console.log(`Fetched ${orders.length} orders for mess: ${messemail}`);
+    res.json(orders);
+
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    res.status(500).json({ error: "Error fetching orders" });
   }
-  catch(error){
-      console.error("Error fetching mess data",error);
-      res.status(400).json({error:"Error in fetching mess data"});
-  }
-})
+});
 
 app.get('/allmesses', async(req,res)=>{
   try{
@@ -155,13 +165,20 @@ app.get('/indmess/:id', async (req, res) => {
     
     const todayMenu = mess.weeklyMenu.find(menu => menu.day === today);
 
+    const getMealItems = (mealType) => {
+      if (!todayMenu) return [];
+      const meal = todayMenu.meals.find(m => m.type === mealType);
+      return meal ? meal.items : [];
+    };
+
     const data = {
       messname: mess.messname,
+      email: mess.email,
       location: mess.location,
       image: mess.image || null,
-      breakfast: todayMenu ? todayMenu.meals[0].items : [],
-      lunch: todayMenu ? todayMenu.meals[1].items : [],
-      dinner: todayMenu ? todayMenu.meals[2].items : [],
+      breakfast: getMealItems('Breakfast').join(', ') || 'Not Available',
+      lunch: getMealItems('Lunch').join(', ') || 'Not Available',
+      dinner: getMealItems('Dinner').join(', ') || 'Not Available',
       time: mess.workinghours || null,
       phone: mess.phone || null,
       weeklyMenu: mess.weeklyMenu || [],
@@ -331,6 +348,22 @@ app.put('/students', async (req, res) => {
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
+});
+
+app.delete('/orders/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedOrder = await Order.findByIdAndDelete(id); 
+
+    if (!deletedOrder) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    res.status(200).json({ message: "Order deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting order:", error);
+    res.status(500).json({ message: "Failed to delete order" });
+  }
 });
 
 app.post('/order' ,async (req,res) => {
