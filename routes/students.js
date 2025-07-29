@@ -43,7 +43,7 @@ router.post('/login', async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
-    res.json({ studtoken });
+    res.json({ token: studtoken });
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ error: 'Server error' });

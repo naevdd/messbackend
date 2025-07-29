@@ -318,32 +318,6 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-app.put('/update-menu', async (req, res) => {
-  const { hostId, weeklyMenu } = req.body; // weeklyMenu is expected to be an array with one object (the day to update)
-  console.log("Update request received:", req.body);
-  try {
-    // Find the Mess document for this host
-    let mess = await Host.findOne({ host: hostId });
-    
-    // Extract the updated day object from the array
-    const updatedDay = weeklyMenu[0];
-    
-    // Remove any existing entry for that day
-    const filteredMenu = mess.weeklyMenu.filter(item => item.day !== updatedDay.day);
-    // Add the updated day
-    filteredMenu.push(updatedDay);
-    
-    // Update the document
-    mess.weeklyMenu = filteredMenu;
-    await mess.save();
-    
-    res.json({ message: 'Menu updated successfully!', data: mess });
-  } catch (error) {
-    console.error('Error while updating menu:', error);
-    res.status(500).json({ message: 'Failed to update menu details' });
-  }
-});
-
 app.post('/order' ,async (req,res) => {
 
   try {
