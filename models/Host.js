@@ -23,6 +23,12 @@ const hostSchema = new mongoose.Schema({
   weeklyMenu: [weeklyMenuSchema],
   review_sum: { type: Number, default: 0 },
   review_total: { type: Number, default: 0 },
+  ratings:[
+    {
+      studentId: String,
+      value: Number
+    }
+  ]
 }, {
   toJSON: { virtuals: true },
   toObject: { virtuals: true }

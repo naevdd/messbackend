@@ -110,16 +110,24 @@ app.get('/allmesses', async(req,res)=>{
   }
 })
 
-app.get('/top_messes', async(req,res)=>{
-  try{
-      const messes = await Host.find().lean({virtuals:true});
-      const sortedMesses = messes.sort((a, b) => (b.review - a.review)).slice(0, 4);
-      res.json(sortedMesses);
+app.get('/top_messes', async (req, res) => {
+  try {
+    const messes = await Host.find().lean({ virtuals: true });
+
+    // Sort based on actual average rating
+    const sortedMesses = messes.sort((a, b) => {
+      const aRating = a.review_total > 0 ? a.review_sum / a.review_total : 0;
+      const bRating = b.review_total > 0 ? b.review_sum / b.review_total : 0;
+      return bRating - aRating;
+    });
+
+    const topMesses = sortedMesses.slice(0, 5); // Top 5 messes
+
+    res.json(topMesses);
+  } catch (error) {
+    res.status(400).json({ error: "Error in fetching mess data" });
   }
-  catch(error){
-      res.status(400).json({error:"Error in fetching mess data"});
-  }
-})
+});
 
 const getDay=()=>{
   const days=["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -170,17 +178,24 @@ app.get('/indmess/:id', async (req, res) => {
 
 app.post('/indmess/:id/rate', async (req, res) => {
   try {
-      const { rating } = req.body; // Get rating from request
+      const { rating, studentId } = req.body; // Get rating from request
       const messData = await Host.findById(req.params.id);
 
       if (!messData) {
           return res.status(404).json({ error: "Mess not found" });
       }
 
-      // Update the review_sum and review_total
-      messData.review_sum += rating;
-      messData.review_total += 1;
-      await messData.save(); // Save updated document
+      const existingRating = messData.ratings.find(r => r.studentId === studentId);
+      if(existingRating){
+        messData.review_sum -= existingRating.value;
+        existingRating.value = rating; 
+        messData.review_sum += rating; 
+      }
+      else{
+        messData.ratings.push({ studentId, value: rating});
+        messData.review_total += 1;
+      }
+      await messData.save();
 
       res.json({ message: "Rating updated successfully", updatedMess: messData });
   } catch (error) {
@@ -348,13 +363,14 @@ app.post('/order' ,async (req,res) => {
 
   try {
     // Find the order by ID and update the details
-    const { orderId, messName, customerName, customerPhone, status, orderDate } = req.body;
+    const { id, messemail, customerName,customerEmail, customerPhone, status,} = req.body;
     console.log("Order details received:", req.body);
 
     const newOrder = new Order({
-      orderId,
-      messName,
+      id,
+      messemail,
       customerName,
+      customerEmail,
       customerPhone,
       orderDate: new Date(),
       status
