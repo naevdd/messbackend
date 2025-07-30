@@ -195,29 +195,50 @@ app.get('/indmess/:id', async (req, res) => {
 
 app.post('/indmess/:id/rate', async (req, res) => {
   try {
-      const { rating, studentId } = req.body; // Get rating from request
-      const messData = await Host.findById(req.params.id);
+    const { rating, studentemail } = req.body;
+    console.log("Received rating:", rating, "from student:", studentemail);
 
-      if (!messData) {
-          return res.status(404).json({ error: "Mess not found" });
-      }
+    if (!studentemail) {
+      return res.status(400).json({ error: "Missing student email" });
+    }
 
-      const existingRating = messData.ratings.find(r => r.studentId === studentId);
-      if(existingRating){
-        messData.review_sum -= existingRating.value;
-        existingRating.value = rating; 
-        messData.review_sum += rating; 
-      }
-      else{
-        messData.ratings.push({ studentId, value: rating});
-        messData.review_total += 1;
-      }
-      await messData.save();
+    const messData = await Host.findOne({ _id: req.params.id });
+    if (!messData) {
+      return res.status(404).json({ error: "Mess not found" });
+    }
 
-      res.json({ message: "Rating updated successfully", updatedMess: messData });
+    // Ensure ratings array exists
+    if (!Array.isArray(messData.ratings)) {
+      messData.ratings = [];
+    }
+
+    const cleanEmail = studentemail.trim().toLowerCase();
+
+    const existingRating = messData.ratings.find(
+      r => r.studentEmail && r.studentEmail.trim().toLowerCase() === cleanEmail
+    );
+
+    const numericRating = Number(rating);
+
+    if (existingRating) {
+      // Update existing rating
+      const oldRating = existingRating.value;
+      existingRating.value = numericRating;
+      messData.review_sum += (numericRating - oldRating);
+    } else {
+      // New rating
+      messData.ratings.push({ studentEmail: cleanEmail, value: numericRating });
+      messData.review_sum += numericRating;
+      messData.review_total += 1;
+    }
+
+    messData.markModified('ratings'); // Important
+    await messData.save();
+
+    res.json({ message: "Rating updated successfully", updatedMess: messData });
   } catch (error) {
-      console.error("Error updating rating:", error);
-      res.status(500).json({ error: "Error updating rating" });
+    console.error("Error updating rating:", error);
+    res.status(500).json({ error: "Error updating rating" });
   }
 });
 
