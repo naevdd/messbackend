@@ -390,7 +390,7 @@ app.delete('/orders/:id', async (req, res) => {
 app.post('/order' ,async (req,res) => {
 
   try {
-    const { orderId, messemail, customerName, customerEmail, customerPhone, status } = req.body;
+    const { orderId, messemail, customerName, customerEmail, customerPhone, orderCount, status } = req.body;
     console.log("Order details received:", req.body);
 
     const newOrder = new Order({
@@ -399,6 +399,7 @@ app.post('/order' ,async (req,res) => {
       customerName,
       customerEmail,
       customerPhone,
+      orderCount,
       orderDate: new Date(),
       status
     });
