@@ -11,6 +11,7 @@ const orderSchema = new mongoose.Schema({
     customerName: { type: String, required: true },
     customerPhone: { type: Number, required: true },
     orderDate: { type: Date, default: Date.now },
+    orderCount: {type: Number, required: true},
     status: { type: String, required: true, enum: ['Pending', 'Delivered', 'Cancelled'] }
 })
 
